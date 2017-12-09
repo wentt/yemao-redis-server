@@ -1,0 +1,153 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var app = require('../app');
+var debug = require('debug')('yemao-redis-server:server');
+var http = require('http');
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '3000');
+app.set('port', port);
+
+/**
+ * redis connect
+ *
+ * client.set(key,value,[callback])
+ * client.get(key,[callback])
+ *
+ * client.sadd(key,value1,...valuen,[callback])
+ * client.multi([commands])??????????????Multi.exec???????github??????????????????????????redis???????????????node_redis??????Multi??
+ ??Multi.exec( callback )???????????github????client.multi()????Multi??????????????Multi.exec()????
+ ??Multi.exec( callback )??????err???null??Array??????????????????????????????????????exec?????EXECABORT?????
+ ??Multi.exec( callback )??????results???null??Array????????????????
+ ??end?redis????????????
+ ??client.sadd(key,value1,...valuen,[callback])?????????key???N??????????????redis2.4??????????
+ ??sismember(key,value,[callback])???value???????key??????1??????0
+ ??smembers(key,[callback])????? key ?????????????key??????????????
+ ??client.quit()??????????client.end()??????????client.quit?????????????quit????client.end???????????end??
+ */
+var settings = require('../settings');
+var redis = require("redis"),
+    client = redis.createClient({detect_buffers: true});
+    client.auth("Yx20171024", redis.print)
+// var redis = require('redis'),
+//     client = redis.createClient(settings.RDS_POST,settings.RDS_HOST,settings.RDS_OPTS);
+//
+// client.on('connect',function(){
+//     console.log('connect');
+//     /**single**/
+//     // client.set('author', 'Wilson',redis.print);
+//     // client.get('author', redis.print);
+//     /**Multiple**/
+//     // client.hmset('short', {'js':'javascript','C#':'C Sharp'}, redis.print);
+//     // client.hmset('short', 'SQL','Structured Query Language','HTML','HyperText Mark-up Language', redis.print);
+//     // client.hgetall("short", function(err,res){
+//     //     if(err)
+//     //     {
+//     //         console.log('Error:'+ err);
+//     //         return;
+//     //     }
+//     //     console.dir(res);
+//     // });
+//
+//     var key = 'skills';
+//     client.sadd(key, 'C#','java',redis.print);
+//     client.sadd(key, 'nodejs');
+//     client.sadd(key, "MySQL");
+//
+//     client.multi()  //transaction
+//     .sismember(key,'C#')  //
+//     .smembers(key)
+//     .exec(function (err, replies) {
+//         console.log("MULTI got " + replies.length + " replies");
+//         replies.forEach(function (reply, index) {
+//             console.log("Reply " + index + ": " + reply.toString());
+//         });
+//         client.quit();
+//     });
+// });
+//
+// client.on('ready',function (err) {
+//     console.log('ready');
+// })
+
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+
+server.listen(port);
+server.on('error', onError);
+server.on('listening', onListening);
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
